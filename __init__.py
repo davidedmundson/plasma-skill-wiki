@@ -46,8 +46,7 @@ class WikipediaSkill(MycroftSkill):
         self.feedback_search = read_stripped_lines(
             join(dirname(__file__), 'dialog', self.lang,
                  'FeedbackSearch.dialog'))
-        self.html_index = dirname(__file__) + '/html/'    
-        self.css_index = dirname(__file__) + '/html/wiki.css'
+        self.visualobject_index = dirname(__file__) + '/qml/'
 
     def initialize(self):
         intent = IntentBuilder("WikipediaIntent").require(
@@ -65,9 +64,9 @@ class WikipediaSkill(MycroftSkill):
             sm = wiki.summary(results[0],sentences = 20);
             spage = wiki.page(title);
             imagemain = spage.images[1]
-            self.__genwebview(sm, imagemain, title)
+            self.__genvisualobjecttemplate(sm, imagemain, title)
             if(sm):
-                self.enclosure.ws.emit(Message("data", {'desktop': {'url': self.html_index + title + 'wikiresult.html'}}))
+                self.enclosure.ws.emit(Message("visualObject", {'desktop': {'url': self.visualobject_index + title + 'Wikiresult.qml'}}))
             self.speak(summary)
             
 
@@ -79,18 +78,38 @@ class WikipediaSkill(MycroftSkill):
         except Exception as e:
             LOGGER.error("Error: {0}".format(e))
             
-    def __genwebview(self, sm, imagemain, title):
+    def __genvisualobjecttemplate(self, sm, imagemain, title):
         simg = imagemain
         smry = sm.encode('utf-8')
         stitle = title.encode('utf-8')
-        fname = self.html_index + stitle + 'wikiresult.html'
-        scss = self.css_index
+        fname = self.visualobject_index + stitle + "Wikiresult.qml"
         f = open(fname,'w')
-        wrapper = """<html><head><link rel="stylesheet" type="text/css" href="{0}"></head><body><div id="imgPlace" style="background-image: url('{1}')"><h1><strong>{2}</strong></h1></div><div id="wikisummary"><p id="paratext">{3}</p></div></body></html>""".format(scss, simg, stitle, smry)
+        wrapper = """import QtQuick 2.9 
+import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.3
+        
+Rectangle {{ 
+            id: bgRect 
+            width: 500; height: 100
+            color: "#222"
+            
+            Rectangle {{
+                id: mainRect
+                anchors.fill: parent
+                color: "#222"
+                
+                Image {{
+                    id: mainTopImage
+                    anchors.top: parent.top 
+                    source: "{0}"
+                    height: parent.height
+                    width: parent.width
+            }}
+                }}
+            }}""".format(simg)
         f.write(wrapper)
         f.close()
 
-    
 
     def __feedback_search(self, title):
         prefix = self.feedback_prefix[randrange(len(self.feedback_prefix))]

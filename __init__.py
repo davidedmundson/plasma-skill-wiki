@@ -20,24 +20,14 @@ from os.path import join, dirname
 
 from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.util.log import LOG
+from mycroft.messagebus.message import Message
 
-__author__ = 'jdorleans'
 
 # Tests:  tell me about john
 
 class WikipediaSkill(MycroftSkill):
     def __init__(self):
         super(WikipediaSkill, self).__init__(name="WikipediaSkill")
-        self.max_results = self.config['max_results']
-        self.max_phrases = self.config['max_phrases']
-        self.question = 'Would you like to know more about '  # TODO - i10n
-        self.feedback_prefix = read_stripped_lines(
-            join(dirname(__file__), 'dialog', self.lang,
-                 'FeedbackPrefix.dialog'))
-        self.feedback_search = read_stripped_lines(
-            join(dirname(__file__), 'dialog', self.lang,
-                 'FeedbackSearch.dialog'))
-        self.visualobject_index = dirname(__file__) + '/qml/'
 
     @intent_handler(IntentBuilder("").require("Wikipedia").
                     require("ArticleTitle"))
@@ -62,7 +52,11 @@ class WikipediaSkill(MycroftSkill):
         if not summary:
             self.speak_dialog("thats all")
         else:
+            spage = wiki.page(article);
+            imagemain = spage.images[1]
             self.speak(summary)
+            if(summary):
+                self.enclosure.ws.emit(Message("wikiaddObject", {'desktop': {'data': {'summarymore': str(summary), 'imagemore': str(imagemain)}}}))
             self.set_context("wiki_article", article)
             self.set_context("spoken_lines", str(lines_spoken_already+5))
 
@@ -100,11 +94,16 @@ class WikipediaSkill(MycroftSkill):
             # parenthesis and brackets.  Wikipedia often includes birthdates
             # in the article title, which breaks up the text badly.
             summary = re.sub(r'\([^)]*\)|/[^/]*/', '', summary)
-
+    
+            # Send to generate display
+            spage = wiki.page(results[0]);
+            imagemain = spage.images[0]
             # Remember context and speak results
             self.set_context("wiki_article", results[0])
             self.set_context("spoken_lines", str(lines))
             self.speak(summary)
+            if(summary):
+                self.enclosure.ws.emit(Message("wikiObject", {'desktop': {'data': {'summary': str(summary), 'image': str(imagemain)}}}))
 
         except wiki.exceptions.DisambiguationError as e:
             # Test:  "tell me about john"
@@ -119,7 +118,6 @@ class WikipediaSkill(MycroftSkill):
 
         except Exception as e:
             LOG.error("Error: {0}".format(e))
-
-
+            
 def create_skill():
     return WikipediaSkill()

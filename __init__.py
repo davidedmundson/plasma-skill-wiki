@@ -56,7 +56,7 @@ class WikipediaSkill(MycroftSkill):
             imagemain = spage.images[1]
             self.speak(summary)
             if(summary):
-                self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia", "title": "text", "content": str(summary), "image": str(imagemain)}))
+                self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia", "title": spage.title, "content": str(summary), "image": str(imagemain)}))
             self.set_context("wiki_article", article)
             self.set_context("spoken_lines", str(lines_spoken_already+5))
 
@@ -102,7 +102,7 @@ class WikipediaSkill(MycroftSkill):
             self.set_context("wiki_article", results[0])
             self.set_context("spoken_lines", str(lines))
             if(summary):
-                    self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia", "title": "text", "content": str(summary), "image": str(imagemain)}))
+                    self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia", "title": wiki.page(results[0]).title, "content": str(summary), "image": str(imagemain)}))
             self.speak(summary)
 
         except wiki.exceptions.DisambiguationError as e:

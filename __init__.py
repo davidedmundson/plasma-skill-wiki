@@ -53,7 +53,7 @@ class WikipediaSkill(MycroftSkill):
             self.speak_dialog("thats all")
         else:
             spage = wiki.page(article);
-            imagemain = spage.images[1]
+            imagemain = spage.thumbnail
             self.speak(summary)
             if(summary):
                 self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia", "title": "text", "content": str(summary), "image": str(imagemain)}))
@@ -97,7 +97,7 @@ class WikipediaSkill(MycroftSkill):
     
             # Send to generate display
             spage = wiki.page(results[0]);
-            imagemain = spage.images[0]
+            imagemain = spage.thumbnail
             # Remember context and speak results
             self.set_context("wiki_article", results[0])
             self.set_context("spoken_lines", str(lines))

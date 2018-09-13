@@ -1,4 +1,5 @@
 # Copyright 2017, Mycroft AI Inc.
+# Copyright 2018  David Edmundson <david@davidedmundson.co.uk>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +34,9 @@ class WikipediaSkill(MycroftSkill):
                     require("ArticleTitle"))
     def handle_intent(self, message):
         # Extract what the user asked about
+        self._lookup(message.data.get("ArticleTitle"))
+
+    def handle_load_article(self, message):
         self._lookup(message.data.get("ArticleTitle"))
 
     @intent_handler(IntentBuilder("").require("More").
@@ -108,6 +112,9 @@ class WikipediaSkill(MycroftSkill):
         except wiki.exceptions.DisambiguationError as e:
             # Test:  "tell me about john"
             options = e.options[:5]
+            print("listing options")
+            self.enclosure.bus.on("wikipedia:load_article", self.handle_load_article)
+            self.enclosure.bus.emit(Message("metadata", {"type": "wikipedia/disambiguate", "options": options}))
 
             option_list = (", ".join(options[:-1]) + " " +
                            self.translate("or") + " " + options[-1])
